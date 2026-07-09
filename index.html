@@ -2,26 +2,73 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Documento</title>
+  <title>PDF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      background: #f5f5f5;
+      background: #f2f2f2;
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
     }
 
-    iframe {
+    #pdf-container {
       width: 100%;
-      height: 100vh;
-      border: none;
-      display: block;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+
+    canvas {
+      width: 96vw !important;
+      height: auto !important;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
   </style>
 </head>
 <body>
-  <iframe src="arquivo.pdf"></iframe>
+
+  <div id="pdf-container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script>
+    const url = "arquivo.pdf";
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    const container = document.getElementById("pdf-container");
+
+    pdfjsLib.getDocument(url).promise.then(function(pdf) {
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(function(page) {
+          const viewportOriginal = page.getViewport({ scale: 1 });
+          const scale = (window.innerWidth * 0.96) / viewportOriginal.width;
+          const viewport = page.getViewport({ scale: scale });
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          container.appendChild(canvas);
+
+          page.render({
+            canvasContext: context,
+            viewport: viewport
+          });
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
